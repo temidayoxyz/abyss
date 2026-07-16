@@ -1,0 +1,23 @@
+{
+  "name": "abyss",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Abyss — immersive 3D deep-ocean exploration simulator built with Three.js",
+  "homepage": "https://temidayoxyz.github.io/abyss/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/temidayoxyz/abyss.git"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "three": "^0.172.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.7"
+  }
+}

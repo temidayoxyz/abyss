@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#020810" />
+    <meta name="description" content="Abyss — living deep-ocean exploration simulator. Descend in a research submersible from sunlit shallows into the lightless trench." />
+    <title>Abyss · Deep-Ocean Exploration</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="ocean-canvas"></canvas>
+
+      <!-- Title / start overlay -->
+      <div id="title-screen" class="overlay-panel">
+        <div class="title-content">
+          <p class="title-eyebrow">Living Deep-Ocean Exploration</p>
+          <h1 class="title-mark">Abyss</h1>
+          <p class="title-tagline">
+            Descend from sunlit shallows into the lightless trench.<br />
+            Scan life. Collect samples. Chart the unknown.
+          </p>
+          <button id="btn-start" type="button" class="btn-primary">Begin Descent</button>
+          <div class="title-hints">
+            <div class="hint-row"><kbd>W A S D</kbd><span>Steer</span></div>
+            <div class="hint-row"><kbd>Q / E</kbd><span>Rise / Dive</span></div>
+            <div class="hint-row"><kbd>Shift</kbd><span>Boost</span></div>
+            <div class="hint-row"><kbd>L</kbd><span>Headlights</span></div>
+            <div class="hint-row"><kbd>F</kbd><span>Sonar</span></div>
+            <div class="hint-row"><kbd>C</kbd><span>Scan</span></div>
+            <div class="hint-row"><kbd>X</kbd><span>Sample</span></div>
+            <div class="hint-row"><kbd>P</kbd><span>Photograph</span></div>
+            <div class="hint-row"><kbd>J</kbd><span>Journal</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main HUD -->
+      <div id="hud" class="hud hidden" aria-live="polite">
+        <header class="hud-top">
+          <div class="hud-brand">
+            <span class="hud-dot"></span>
+            <span class="vessel-name">AURORA-7</span>
+            <span class="mission-tag">SURVEY</span>
+          </div>
+          <div class="hud-center-depth">
+            <span class="depth-value" id="hud-depth">0</span>
+            <span class="depth-unit">m</span>
+            <span class="depth-label">DEPTH</span>
+          </div>
+          <div class="hud-status-pills">
+            <span class="pill" id="pill-lights" data-on="false">LIGHTS</span>
+            <span class="pill" id="pill-sonar" data-on="false">SONAR</span>
+            <span class="pill" id="pill-boost" data-on="false">BOOST</span>
+          </div>
+        </header>
+
+        <aside class="hud-left">
+          <div class="gauge-card">
+            <div class="gauge-label">PRESSURE</div>
+            <div class="gauge-value"><span id="hud-pressure">1.0</span> <small>atm</small></div>
+            <div class="gauge-bar"><div id="bar-pressure" class="gauge-fill"></div></div>
+          </div>
+          <div class="gauge-card">
+            <div class="gauge-label">TEMPERATURE</div>
+            <div class="gauge-value"><span id="hud-temp">24</span> <small>°C</small></div>
+            <div class="gauge-bar cold"><div id="bar-temp" class="gauge-fill"></div></div>
+          </div>
+          <div class="gauge-card">
+            <div class="gauge-label">VISIBILITY</div>
+            <div class="gauge-value"><span id="hud-vis">100</span> <small>m</small></div>
+            <div class="gauge-bar"><div id="bar-vis" class="gauge-fill"></div></div>
+          </div>
+          <div class="gauge-card">
+            <div class="gauge-label">SURFACE</div>
+            <div class="gauge-value"><span id="hud-surface">0</span> <small>m</small></div>
+          </div>
+        </aside>
+
+        <aside class="hud-right">
+          <div class="gauge-card">
+            <div class="gauge-label">OXYGEN</div>
+            <div class="gauge-value"><span id="hud-oxygen">100</span> <small>%</small></div>
+            <div class="gauge-bar oxygen"><div id="bar-oxygen" class="gauge-fill"></div></div>
+          </div>
+          <div class="gauge-card">
+            <div class="gauge-label">BATTERY</div>
+            <div class="gauge-value"><span id="hud-battery">100</span> <small>%</small></div>
+            <div class="gauge-bar battery"><div id="bar-battery" class="gauge-fill"></div></div>
+          </div>
+          <div class="gauge-card sonar-card">
+            <div class="gauge-label">SONAR</div>
+            <div class="sonar-display" id="sonar-display">
+              <div class="sonar-ring r1"></div>
+              <div class="sonar-ring r2"></div>
+              <div class="sonar-ring r3"></div>
+              <div class="sonar-sweep" id="sonar-sweep"></div>
+              <div class="sonar-blips" id="sonar-blips"></div>
+              <div class="sonar-center"></div>
+            </div>
+            <div class="sonar-status" id="sonar-status">STANDBY</div>
+          </div>
+          <div class="gauge-card creatures-card">
+            <div class="gauge-label">NEARBY</div>
+            <ul class="creature-list" id="nearby-list"></ul>
+          </div>
+        </aside>
+
+        <footer class="hud-bottom">
+          <div class="discoveries-strip">
+            <span class="strip-label">DISCOVERIES</span>
+            <span class="strip-count" id="discovery-count">0</span>
+            <div class="strip-chips" id="discovery-chips"></div>
+          </div>
+          <div class="action-bar">
+            <button type="button" class="action-btn" data-action="lights" title="Headlights (L)">
+              <span class="action-key">L</span><span>Lights</span>
+            </button>
+            <button type="button" class="action-btn" data-action="sonar" title="Sonar (F)">
+              <span class="action-key">F</span><span>Sonar</span>
+            </button>
+            <button type="button" class="action-btn" data-action="scan" title="Scan (C)">
+              <span class="action-key">C</span><span>Scan</span>
+            </button>
+            <button type="button" class="action-btn" data-action="sample" title="Sample (X)">
+              <span class="action-key">X</span><span>Sample</span>
+            </button>
+            <button type="button" class="action-btn" data-action="photo" title="Photograph (P)">
+              <span class="action-key">P</span><span>Photo</span>
+            </button>
+            <button type="button" class="action-btn" data-action="journal" title="Journal (J)">
+              <span class="action-key">J</span><span>Journal</span>
+            </button>
+          </div>
+        </footer>
+
+        <!-- Mobile touch controls -->
+        <div class="touch-controls" id="touch-controls" aria-hidden="true">
+          <div class="stick-zone stick-left" id="stick-move">
+            <div class="stick-base"><div class="stick-knob" id="stick-move-knob"></div></div>
+            <span class="stick-label">MOVE</span>
+          </div>
+          <div class="stick-zone stick-right" id="stick-look">
+            <div class="stick-base"><div class="stick-knob" id="stick-look-knob"></div></div>
+            <span class="stick-label">LOOK</span>
+          </div>
+          <div class="touch-vertical">
+            <button type="button" class="touch-btn" id="btn-rise" aria-label="Rise">↑</button>
+            <button type="button" class="touch-btn" id="btn-dive" aria-label="Dive">↓</button>
+          </div>
+        </div>
+
+        <div class="toast-stack" id="toast-stack"></div>
+        <div class="scan-reticule hidden" id="scan-reticule"></div>
+        <div class="photo-flash" id="photo-flash"></div>
+        <div class="encounter-banner hidden" id="encounter-banner">
+          <span class="encounter-icon">◉</span>
+          <span id="encounter-text"></span>
+        </div>
+        <div class="crosshair" id="crosshair"></div>
+      </div>
+
+      <!-- Discovery journal -->
+      <div id="journal" class="journal-panel hidden" role="dialog" aria-label="Discovery journal">
+        <div class="journal-inner">
+          <header class="journal-header">
+            <div>
+              <p class="journal-eyebrow">Field Log · Aurora-7</p>
+              <h2>Discovery Journal</h2>
+            </div>
+            <button type="button" class="btn-ghost" id="btn-close-journal" aria-label="Close journal">✕</button>
+          </header>
+          <div class="journal-body">
+            <nav class="journal-nav" id="journal-nav"></nav>
+            <article class="journal-entry" id="journal-entry">
+              <p class="journal-empty">Scan creatures or sample sites to fill this log.</p>
+            </article>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scan result modal -->
+      <div id="scan-modal" class="scan-modal hidden" role="dialog" aria-label="Scan result">
+        <div class="scan-modal-inner">
+          <div class="scan-modal-header">
+            <span class="scan-badge">BIOMETRIC SCAN</span>
+            <button type="button" class="btn-ghost" id="btn-close-scan" aria-label="Close">✕</button>
+          </div>
+          <div class="scan-modal-body" id="scan-modal-body"></div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
